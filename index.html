@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PCICU Curriculum</title>
+  <style>
+    [hidden] { display: none !important; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f5f6f8; color: #222; }
+    header { background: #1f3a5f; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    header button { background: #fff; color: #1f3a5f; border: 0; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    #login { text-align: center; margin-top: 120px; }
+    #login button { font-size: 1.1em; padding: 12px 24px; cursor: pointer; }
+    main { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .intro { color: #555; font-size: 0.95em; }
+    h3 { margin: 24px 0 8px; color: #1f3a5f; border-bottom: 2px solid #d0d7e2; padding-bottom: 4px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fff; padding: 10px 14px; border-radius: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    .opts { display: flex; gap: 14px; font-size: 0.85em; flex-wrap: wrap; }
+    .opts label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    #admin { background: #fff; padding: 16px; border-radius: 6px; margin-top: 30px; }
+    details { border: 1px solid #d0d7e2; border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    summary { cursor: pointer; font-weight: 600; }
+    ul.summary { list-style: none; padding-left: 4px; margin: 8px 0 0; }
+    ul.summary li { padding: 2px 0; font-size: 0.9em; }
+    .s-none { color: #888; }
+    .s-more { color: #b26a00; }
+    .s-decent { color: #1a7f37; }
+    @media (max-width: 600px) { .opts { width: 100%; justify-content: space-between; } }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>PCICU Curriculum</strong>
+    <div>
+      <span id="whoami"></span>
+      <button id="logout" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <section id="login" hidden>
+    <p>Sign in with Google to record your selections.</p>
+    <button id="loginBtn">Sign in with Google</button>
+  </section>
+
+  <main id="app" hidden>
+    <p class="intro">For each item, check the one box that best describes you. Your choices save automatically.</p>
+    <div id="curriculum"></div>
+
+    <section id="admin" hidden>
+      <h2>Moderator view</h2>
+      <div id="adminList"></div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
