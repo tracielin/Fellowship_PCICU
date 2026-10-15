@@ -18,6 +18,7 @@ const STATUSES = [
   { key: "more", label: "Learned, could use more", cls: "s-more" },
   { key: "decent", label: "Learned a decent amount", cls: "s-decent" }
 ];
+const DEFAULT_STATUS = "none";
 const STATUS_BY_KEY = Object.fromEntries(STATUSES.map(s => [s.key, s]));
 const ITEMS = curriculum.filter(e => e.id);
 
@@ -28,48 +29,73 @@ let unsubAdmin = null;
 
 const $ = id => document.getElementById(id);
 
-// ---------- Build the curriculum list ----------
+// ---------- Build the curriculum table ----------
+// One table: the status labels are the column headers (sticky while scrolling),
+// and each item row has one checkbox per status.
 function buildCurriculum() {
-  const wrap = $("curriculum");
+  const table = document.createElement("table");
+  table.className = "curriculum";
+
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  const topic = document.createElement("th");
+  topic.scope = "col";
+  topic.textContent = "Topic";
+  headRow.appendChild(topic);
+  for (const s of STATUSES) {
+    const th = document.createElement("th");
+    th.scope = "col";
+    th.textContent = s.label;
+    headRow.appendChild(th);
+  }
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
   for (const entry of curriculum) {
+    const tr = document.createElement("tr");
     if (entry.header) {
-      const h = document.createElement("h3");
-      h.textContent = entry.header;
-      wrap.appendChild(h);
+      tr.className = "section";
+      const td = document.createElement("td");
+      td.colSpan = STATUSES.length + 1;
+      td.textContent = entry.header;
+      tr.appendChild(td);
+      tbody.appendChild(tr);
       continue;
     }
-    const row = document.createElement("div");
-    row.className = "row";
 
-    const title = document.createElement("span");
+    const title = document.createElement("th");
+    title.scope = "row";
     title.textContent = entry.title;
-    row.appendChild(title);
+    tr.appendChild(title);
 
-    const opts = document.createElement("div");
-    opts.className = "opts";
     for (const s of STATUSES) {
-      const label = document.createElement("label");
+      const td = document.createElement("td");
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.dataset.item = entry.id;
       cb.dataset.status = s.key;
+      cb.setAttribute("aria-label", `${entry.title}: ${s.label}`);
       cb.addEventListener("change", () => onToggle(entry.id, s.key, cb.checked));
-      label.append(cb, " " + s.label);
-      opts.appendChild(label);
+      td.appendChild(cb);
+      tr.appendChild(td);
     }
-    row.appendChild(opts);
-    wrap.appendChild(row);
+    tbody.appendChild(tr);
   }
+  table.appendChild(tbody);
+  $("curriculum").appendChild(table);
 }
 
-// Each item allows exactly one status. Checking one clears the others.
+// Exactly one status per row. Clicking the checked box does nothing;
+// clicking another box moves the selection to it.
 function onToggle(itemId, status, checked) {
-  const next = { ...mySelections };
-  if (checked) next[itemId] = status;
-  else delete next[itemId];
-  mySelections = next;
+  if (!checked) {
+    paintCheckboxes();
+    return;
+  }
+  mySelections = { ...mySelections, [itemId]: status };
   paintCheckboxes();
-  saveSelections();
+  saveSelections({ [itemId]: status });
 }
 
 function paintCheckboxes() {
@@ -78,15 +104,16 @@ function paintCheckboxes() {
   });
 }
 
-async function saveSelections() {
+// Writes only the given keys. merge: true means other saved answers are untouched.
+async function saveSelections(partial) {
   if (!currentUser) return;
   try {
     await setDoc(doc(db, "selections", currentUser.uid), {
       name: currentUser.displayName || "",
       email: currentUser.email || "",
-      selections: mySelections,
+      selections: partial,
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true });
   } catch (err) {
     console.error("Save failed:", err);
     alert("Could not save your selection. Please check your connection and try again.");
@@ -135,8 +162,19 @@ function renderAdmin(users) {
 function startSync(user) {
   unsubSelf?.();
   unsubSelf = onSnapshot(doc(db, "selections", user.uid), snap => {
-    mySelections = snap.data()?.selections || {};
+    const saved = snap.data()?.selections || {};
+
+    // Any item without a saved answer defaults to "Haven't specifically learned yet".
+    // Those defaults are saved once, so the data is complete for every user.
+    const missing = {};
+    for (const item of ITEMS) {
+      if (!(item.id in saved)) missing[item.id] = DEFAULT_STATUS;
+    }
+
+    mySelections = { ...saved, ...missing };
     paintCheckboxes();
+
+    if (Object.keys(missing).length > 0) saveSelections(missing);
   });
 
   unsubAdmin?.();
