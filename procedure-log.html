@@ -19,7 +19,7 @@
     .log-section { background: #fff; border-radius: 6px; padding: 14px 16px; margin: 16px 0; }
     .log-section h3 { margin: 0 0 6px; color: #1f3a5f; border-bottom: 2px solid #d0d7e2; padding-bottom: 4px; }
     .goal { color: #555; font-size: 0.95em; margin: 6px 0; }
-    .progress { font-weight: 600; color: #1a7f37; margin: 6px 0; }
+    .progress { font-weight: 600; color: #1a7f37; margin: 6px 0; min-height: 1.4em; }
     button { font: inherit; padding: 6px 12px; border-radius: 4px; cursor: pointer; border: 1px solid #1f3a5f; background: #fff; color: #1f3a5f; }
     button.primary { background: #1f3a5f; color: #fff; }
     form.entry { display: grid; gap: 10px; margin: 12px 0; padding: 12px; background: #f0f4fa; border-radius: 6px; }
@@ -29,9 +29,14 @@
     .empty { color: #888; font-size: 0.9em; }
     ul.logs { list-style: none; padding: 0; margin: 0; }
     ul.logs li { border-top: 1px solid #e3e8f0; padding: 8px 0; display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    ul.logs li > div:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
     .log-main { font-weight: 600; }
     .log-meta { font-size: 0.85em; color: #666; }
-    .delete-btn { border-color: #b42318; color: #b42318; white-space: nowrap; }
+    .delete-btn { border-color: #b42318; color: #b42318; white-space: nowrap; flex-shrink: 0; }
+    button.danger { background: #b42318; border-color: #b42318; color: #fff; }
+    dialog { border: 1px solid #d0d7e2; border-radius: 8px; padding: 20px; max-width: 360px; }
+    dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
     #admin { background: #fff; padding: 16px; border-radius: 6px; margin: 30px 0; }
     details { border: 1px solid #d0d7e2; border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
     summary { cursor: pointer; font-weight: 600; }
@@ -65,6 +70,14 @@
       <div id="adminList"></div>
     </section>
   </main>
+
+  <dialog id="confirmDialog">
+    <p>Delete this entry? This cannot be undone.</p>
+    <div class="dialog-actions">
+      <button type="button" id="keepEntry">Keep entry</button>
+      <button type="button" id="confirmDelete" class="danger">Delete entry</button>
+    </div>
+  </dialog>
 
   <script type="module" src="procedure-log.js"></script>
 </body>

@@ -24,6 +24,8 @@ const CICU_PROCEDURES = [
   "Tested temporary pacing wires", "Other"
 ];
 
+const ECHO_OPTIONS = ["Obtained TTE images", "Obtained TEE images", "Other"];
+
 const SECTIONS = [
   {
     key: "cath",
@@ -44,6 +46,12 @@ const SECTIONS = [
     key: "cicu",
     title: "CICU/Anesthesiology",
     goal: "Log all CICU/Anesthesiology procedures here.",
+    progress: null
+  },
+  {
+    key: "echo",
+    title: "Echo",
+    goal: "While we would like you to both obtain echo images and discuss interpretation, to avoid fatigue about logging, we only ask that you log experience with obtaining echo images.",
     progress: null
   }
 ];
@@ -116,9 +124,11 @@ function buildForm(section) {
       <label class="other-field" hidden>Describe the procedure
         <textarea name="description" rows="2"></textarea></label>`;
   } else {
-    const options = CICU_PROCEDURES.map(p => `<option value="${p}">${p}</option>`).join("");
-    extra = `<label>Procedure
-        <select name="item" required><option value="">Select a procedure</option>${options}</select></label>
+    const choices = section.key === "echo" ? ECHO_OPTIONS : CICU_PROCEDURES;
+    const label = section.key === "echo" ? "Echo images" : "Procedure";
+    const options = choices.map(p => `<option value="${p}">${p}</option>`).join("");
+    extra = `<label>${label}
+        <select name="item" required><option value="">Select an option</option>${options}</select></label>
       <label class="other-field" hidden>Describe the procedure
         <input type="text" name="description"></label>`;
   }
@@ -157,7 +167,7 @@ function buildForm(section) {
     const fd = new FormData(form);
     const item = fd.get("item") || null;
     let description = (fd.get("description") || "").trim() || null;
-    if (section.key === "cicu" && !isOtherChoice(item || "")) description = null;
+    if (section.key !== "cath" && !isOtherChoice(item || "")) description = null;
     if (section.key === "ep" && item !== "Other procedure") description = null;
 
     const record = {
@@ -282,15 +292,33 @@ function renderAdmin(entries) {
   }
 }
 
-async function deleteEntry(id) {
-  if (!confirm("Delete this entry? This cannot be undone.")) return;
+let pendingDeleteId = null;
+
+function deleteEntry(id) {
+  pendingDeleteId = id;
+  $("confirmDialog").showModal();
+}
+
+$("keepEntry").addEventListener("click", () => {
+  pendingDeleteId = null;
+  $("confirmDialog").close();
+});
+
+$("confirmDelete").addEventListener("click", async () => {
+  const id = pendingDeleteId;
+  pendingDeleteId = null;
+  $("confirmDialog").close();
+  if (!id) return;
   try {
     await deleteDoc(doc(db, COLLECTION, id));
   } catch (err) {
     console.error("Delete failed:", err);
     alert("Could not delete this entry. Please try again.");
   }
-}
+});
+
+// Escape or clicking outside the dialog also cancels the pending delete.
+$("confirmDialog").addEventListener("close", () => { pendingDeleteId = null; });
 
 // ---------- Sync with Firestore ----------
 function startSync(user) {
