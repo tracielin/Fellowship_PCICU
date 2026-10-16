@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UVA PCICU Fellowship Procedure Log</title>
+  <style>
+    [hidden] { display: none !important; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f5f6f8; color: #222; }
+    header { background: #1f3a5f; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    header button { background: #fff; color: #1f3a5f; border: 0; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    nav.tabs { background: #fff; border-bottom: 1px solid #d0d7e2; display: flex; gap: 4px; padding: 0 20px; }
+    nav.tabs a { padding: 10px 16px; color: #1f3a5f; text-decoration: none; font-weight: 600; border-bottom: 3px solid transparent; }
+    nav.tabs a.active { border-bottom-color: #1f3a5f; }
+    #login { text-align: center; margin-top: 120px; }
+    #login button { font-size: 1.1em; padding: 12px 24px; cursor: pointer; }
+    main { max-width: 900px; margin: 0 auto; padding: 20px; }
+    h2 { color: #1f3a5f; margin: 8px 0 0; }
+    .log-section { background: #fff; border-radius: 6px; padding: 14px 16px; margin: 16px 0; }
+    .log-section h3 { margin: 0 0 6px; color: #1f3a5f; border-bottom: 2px solid #d0d7e2; padding-bottom: 4px; }
+    .goal { color: #555; font-size: 0.95em; margin: 6px 0; }
+    .progress { font-weight: 600; color: #1a7f37; margin: 6px 0; }
+    button { font: inherit; padding: 6px 12px; border-radius: 4px; cursor: pointer; border: 1px solid #1f3a5f; background: #fff; color: #1f3a5f; }
+    button.primary { background: #1f3a5f; color: #fff; }
+    form.entry { display: grid; gap: 10px; margin: 12px 0; padding: 12px; background: #f0f4fa; border-radius: 6px; }
+    form.entry label { display: grid; gap: 4px; font-size: 0.9em; }
+    form.entry input, form.entry select, form.entry textarea { font: inherit; padding: 6px; border: 1px solid #b8c4d6; border-radius: 4px; }
+    .entry-actions { display: flex; gap: 8px; }
+    .empty { color: #888; font-size: 0.9em; }
+    ul.logs { list-style: none; padding: 0; margin: 0; }
+    ul.logs li { border-top: 1px solid #e3e8f0; padding: 8px 0; display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .log-main { font-weight: 600; }
+    .log-meta { font-size: 0.85em; color: #666; }
+    .delete-btn { border-color: #b42318; color: #b42318; white-space: nowrap; }
+    #admin { background: #fff; padding: 16px; border-radius: 6px; margin: 30px 0; }
+    details { border: 1px solid #d0d7e2; border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
+    summary { cursor: pointer; font-weight: 600; }
+    h4 { margin: 12px 0 4px; color: #1f3a5f; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>UVA PCICU Fellowship Procedure Log</strong>
+    <div>
+      <span id="whoami"></span>
+      <button id="logout" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <a href="index.html">Topic tracker</a>
+    <a href="procedure-log.html" class="active" aria-current="page">Procedure log</a>
+  </nav>
+
+  <section id="login" hidden>
+    <p>Sign in with Google to record your procedure log.</p>
+    <button id="loginBtn">Sign in with Google</button>
+  </section>
+
+  <main id="app" hidden>
+    <div id="sections"></div>
+
+    <section id="admin" hidden>
+      <h2>Moderator view</h2>
+      <div id="adminList"></div>
+    </section>
+  </main>
+
+  <script type="module" src="procedure-log.js"></script>
+</body>
+</html>
