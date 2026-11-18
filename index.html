@@ -7,8 +7,9 @@
   <style>
     [hidden] { display: none !important; }
     body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f5f6f8; color: #222; }
-    header { background: #1f3a5f; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    header { background: #1f3a5f; color: #fff; padding: 22px 20px 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     header button { background: #fff; color: #1f3a5f; border: 0; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    header .initials { display: none; width: 34px; height: 34px; padding: 0; border-radius: 50%; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9em; }
     nav.tabs { background: #fff; border-bottom: 1px solid #d0d7e2; display: flex; gap: 4px; padding: 0 20px; }
     nav.tabs a { padding: 10px 16px; color: #1f3a5f; text-decoration: none; font-weight: 600; border-bottom: 3px solid transparent; }
     nav.tabs a.active { border-bottom-color: #1f3a5f; }
@@ -16,8 +17,12 @@
     #login button { font-size: 1.1em; padding: 12px 24px; cursor: pointer; }
     main { max-width: 900px; margin: 0 auto; padding: 20px; }
     .intro { color: #555; font-size: 0.95em; }
-    details.about { background: #fff; margin: 0 0 12px; }
+    .about-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
+    .about-row details.about { flex: 1 1 0; min-width: 0; margin: 0; background: #fff; }
+    .about-row:has(details.about[open]) details.about { flex-basis: 100%; }
     details.about .intro { margin: 8px 0 4px; }
+    .section-controls { margin-left: auto; display: flex; gap: 6px; }
+    .section-controls button { background: #fff; color: #1f3a5f; border: 1px solid #1f3a5f; border-radius: 4px; padding: 6px 12px; font: inherit; font-size: 0.9em; cursor: pointer; }
     h3 { margin: 24px 0 8px; color: #1f3a5f; border-bottom: 2px solid #d0d7e2; padding-bottom: 4px; }
     table.curriculum { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 6px; font-size: 0.95em; }
     table.curriculum th, table.curriculum td { padding: 10px 8px; border-bottom: 1px solid #e3e8f0; text-align: center; vertical-align: middle; }
@@ -26,7 +31,11 @@
     table.curriculum thead th:first-child { border-top-left-radius: 6px; }
     table.curriculum thead th:last-child { border-top-right-radius: 6px; }
     table.curriculum tbody th { font-weight: normal; }
-    table.curriculum tr.section td { background: #e9eef6; color: #1f3a5f; font-weight: 600; text-align: left; padding-left: 14px; }
+    table.curriculum .col-sep { border-left: 2px solid #5d7499; }
+    table.curriculum tr.section td { background: #e9eef6; color: #1f3a5f; font-weight: 700; font-size: 1.15em; text-align: left; padding: 12px 14px; border-left: 6px solid #1f3a5f; }
+    button.section-toggle { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%; }
+    button.section-toggle:focus-visible { outline: 2px solid #1f3a5f; outline-offset: 2px; }
+    .chevron { display: inline-block; width: 1em; font-size: 0.9em; }
     table.curriculum input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; }
     #admin { background: #fff; padding: 16px; border-radius: 6px; margin-top: 30px; }
     details { border: 1px solid #d0d7e2; border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
@@ -37,7 +46,18 @@
     .s-more { color: #b26a00; }
     .s-decent { color: #1a7f37; }
     .s-competent { color: #1f3a5f; }
-    @media (max-width: 600px) { table.curriculum { font-size: 0.85em; } table.curriculum th, table.curriculum td { padding: 8px 4px; } table.curriculum th:first-child, table.curriculum td:first-child { padding-left: 8px; } }
+    dialog { border: 1px solid #d0d7e2; border-radius: 8px; padding: 20px; max-width: 360px; }
+    dialog::backdrop { background: rgba(0, 0, 0, 0.35); }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+    .dialog-actions button { font: inherit; padding: 6px 12px; border-radius: 4px; cursor: pointer; border: 1px solid #1f3a5f; background: #fff; color: #1f3a5f; }
+    .dialog-actions button.primary { background: #1f3a5f; color: #fff; }
+    @media (max-width: 600px) {
+      table.curriculum { font-size: 0.85em; }
+      table.curriculum th, table.curriculum td { padding: 8px 4px; }
+      table.curriculum th:first-child, table.curriculum td:first-child { padding-left: 8px; }
+      #whoami, #logout { display: none; }
+      header .initials { display: inline-flex; }
+    }
   </style>
 </head>
 <body>
@@ -45,6 +65,7 @@
     <strong>UVA PCICU Fellowship Educational Experience Log</strong>
     <div>
       <span id="whoami"></span>
+      <button id="initials" class="initials" hidden></button>
       <button id="logout" hidden>Sign out</button>
     </div>
   </header>
@@ -60,11 +81,17 @@
   </section>
 
   <main id="app" hidden>
-    <details class="about">
-      <summary>About</summary>
-      <p class="intro">This tool: (1) is a guide for you regarding educational expectations during this fellowship, (2) helps the program directors track what is being learned during your rotations to ensure a well-rounded experience. <br>
-      Let your attendings know what items you still need to check off. This log is automatically viewable by the PCICU fellowship program directors so that we can help advocate for your education if gaps become apparent.</p>
-    </details>
+    <div class="about-row">
+      <details class="about">
+        <summary>About</summary>
+        <p class="intro">This tool: (1) is a guide for you regarding educational expectations during this fellowship, (2) helps the program directors track what is being learned during your rotations to ensure a well-rounded experience. <br>
+        Let your attendings know what items you still need to check off. This log is automatically viewable by the PCICU fellowship program directors so that we can help advocate for your education if gaps become apparent.</p>
+      </details>
+      <div class="section-controls">
+        <button type="button" id="expandAll">Expand all</button>
+        <button type="button" id="collapseAll">Collapse all</button>
+      </div>
+    </div>
     <p class="intro">For each item, update the checkboxes as you learn about each topic.  Your choices save automatically.</p>
     <div id="curriculum"></div>
 
@@ -73,6 +100,14 @@
       <div id="adminList"></div>
     </section>
   </main>
+
+  <dialog id="logoutDialog">
+    <p>Log out?</p>
+    <div class="dialog-actions">
+      <button type="button" id="cancelLogout">Stay signed in</button>
+      <button type="button" id="confirmLogout" class="primary">Log out</button>
+    </div>
+  </dialog>
 
   <script type="module" src="app.js"></script>
 </body>

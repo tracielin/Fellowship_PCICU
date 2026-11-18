@@ -41,6 +41,11 @@
     details { border: 1px solid #d0d7e2; border-radius: 6px; padding: 8px 12px; margin: 6px 0; }
     summary { cursor: pointer; font-weight: 600; }
     h4 { margin: 12px 0 4px; color: #1f3a5f; }
+    header .initials { display: none; width: 34px; height: 34px; padding: 0; border-radius: 50%; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9em; }
+    @media (max-width: 600px) {
+      #whoami, #logout { display: none; }
+      header .initials { display: inline-flex; }
+    }
   </style>
 </head>
 <body>
@@ -48,6 +53,7 @@
     <strong>UVA PCICU Fellowship Procedure Log</strong>
     <div>
       <span id="whoami"></span>
+      <button id="initials" class="initials" hidden></button>
       <button id="logout" hidden>Sign out</button>
     </div>
   </header>
@@ -76,6 +82,14 @@
     <div class="dialog-actions">
       <button type="button" id="keepEntry">Keep entry</button>
       <button type="button" id="confirmDelete" class="danger">Delete entry</button>
+    </div>
+  </dialog>
+
+  <dialog id="logoutDialog">
+    <p>Log out?</p>
+    <div class="dialog-actions">
+      <button type="button" id="cancelLogout">Stay signed in</button>
+      <button type="button" id="confirmLogout" class="primary">Log out</button>
     </div>
   </dialog>
 
