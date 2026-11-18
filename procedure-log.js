@@ -6,6 +6,7 @@ import {
   getFirestore, collection, addDoc, deleteDoc, doc, query, where, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, ADMIN_EMAIL } from "./config.js";
+import { updateHeaderUser, initHeaderLogout } from "./header.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -357,6 +358,7 @@ $("loginBtn").addEventListener("click", async () => {
 });
 
 $("logout").addEventListener("click", () => signOut(auth));
+initHeaderLogout(auth, signOut);
 
 onAuthStateChanged(auth, user => {
   currentUser = user;
@@ -364,6 +366,7 @@ onAuthStateChanged(auth, user => {
   $("app").hidden = !user;
   $("logout").hidden = !user;
   $("whoami").textContent = user ? user.email : "";
+  updateHeaderUser(user);
 
   if (user) startSync(user);
   else stopSync();

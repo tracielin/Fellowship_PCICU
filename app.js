@@ -7,6 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, ADMIN_EMAIL } from "./config.js";
 import { curriculum } from "./curriculum.js";
+import { updateHeaderUser, initHeaderLogout } from "./header.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -22,17 +23,45 @@ const STATUSES = [
 const DEFAULT_STATUS = "none";
 const STATUS_BY_KEY = Object.fromEntries(STATUSES.map(s => [s.key, s]));
 const ITEMS = curriculum.filter(e => e.id);
+const COLLAPSED_KEY = "pcicu.collapsedSections";
 
 let currentUser = null;
 let mySelections = {};
 let unsubSelf = null;
 let unsubAdmin = null;
+let sections = [];
 
 const $ = id => document.getElementById(id);
 
+// ---------- Collapsible sections ----------
+function loadCollapsedNames() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(COLLAPSED_KEY)) || []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveCollapsedNames() {
+  const names = sections.filter(s => s.collapsed).map(s => s.name);
+  try {
+    localStorage.setItem(COLLAPSED_KEY, JSON.stringify(names));
+  } catch {
+    // Storage unavailable (e.g. private browsing); the choice just won't persist.
+  }
+}
+
+function setSection(section, collapsed) {
+  section.collapsed = collapsed;
+  section.toggle.setAttribute("aria-expanded", String(!collapsed));
+  section.chevron.textContent = collapsed ? "▸" : "▾";
+  for (const tr of section.rows) tr.hidden = collapsed;
+}
+
 // ---------- Build the curriculum table ----------
 // One table: the status labels are the column headers (sticky while scrolling),
-// and each item row has one checkbox per status.
+// and each item row has one checkbox per status. Section header rows toggle
+// the item rows beneath them.
 function buildCurriculum() {
   const table = document.createElement("table");
   table.className = "curriculum";
@@ -47,23 +76,43 @@ function buildCurriculum() {
     const th = document.createElement("th");
     th.scope = "col";
     th.textContent = s.label;
+    if (s.key === "competent") th.classList.add("col-sep");
     headRow.appendChild(th);
   }
   thead.appendChild(headRow);
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
+  let current = null;
   for (const entry of curriculum) {
     const tr = document.createElement("tr");
     if (entry.header) {
       tr.className = "section";
       const td = document.createElement("td");
       td.colSpan = STATUSES.length + 1;
-      td.textContent = entry.header;
+
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "section-toggle";
+      const chevron = document.createElement("span");
+      chevron.className = "chevron";
+      chevron.setAttribute("aria-hidden", "true");
+      toggle.append(chevron, document.createTextNode(entry.header));
+      td.appendChild(toggle);
       tr.appendChild(td);
       tbody.appendChild(tr);
+
+      const section = { name: entry.header, toggle, chevron, rows: [], collapsed: false };
+      toggle.addEventListener("click", () => {
+        setSection(section, !section.collapsed);
+        saveCollapsedNames();
+      });
+      sections.push(section);
+      current = section;
       continue;
     }
+
+    if (current) current.rows.push(tr);
 
     const title = document.createElement("th");
     title.scope = "row";
@@ -72,6 +121,7 @@ function buildCurriculum() {
 
     for (const s of STATUSES) {
       const td = document.createElement("td");
+      if (s.key === "competent") td.classList.add("col-sep");
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.dataset.item = entry.id;
@@ -85,7 +135,20 @@ function buildCurriculum() {
   }
   table.appendChild(tbody);
   $("curriculum").appendChild(table);
+
+  const savedCollapsed = loadCollapsedNames();
+  for (const section of sections) setSection(section, savedCollapsed.has(section.name));
 }
+
+$("expandAll").addEventListener("click", () => {
+  sections.forEach(s => setSection(s, false));
+  saveCollapsedNames();
+});
+
+$("collapseAll").addEventListener("click", () => {
+  sections.forEach(s => setSection(s, true));
+  saveCollapsedNames();
+});
 
 // Exactly one status per row. Clicking the checked box does nothing;
 // clicking another box moves the selection to it.
@@ -207,6 +270,7 @@ $("loginBtn").addEventListener("click", async () => {
 });
 
 $("logout").addEventListener("click", () => signOut(auth));
+initHeaderLogout(auth, signOut);
 
 onAuthStateChanged(auth, user => {
   currentUser = user;
@@ -214,6 +278,7 @@ onAuthStateChanged(auth, user => {
   $("app").hidden = !user;
   $("logout").hidden = !user;
   $("whoami").textContent = user ? user.email : "";
+  updateHeaderUser(user);
 
   if (user) startSync(user);
   else stopSync();
