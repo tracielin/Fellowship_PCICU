@@ -16,7 +16,7 @@ const provider = new GoogleAuthProvider();
 const STATUSES = [
   { key: "none", label: "Haven't specifically learned yet", cls: "s-none" },
   { key: "more", label: "Learned, could use more", cls: "s-more" },
-  { key: "decent", label: "Learned a decent amount", cls: "s-decent" }
+  { key: "decent", label: "Learned a decent amount", cls: "s-decent" },
   { key: "competent", label: "Confirmed competent per attending", cls: "s-competent" }
 ];
 const DEFAULT_STATUS = "none";
