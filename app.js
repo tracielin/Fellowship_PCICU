@@ -34,20 +34,64 @@ let sections = [];
 const $ = id => document.getElementById(id);
 
 // ---------- Collapsible sections ----------
-function loadCollapsedNames() {
+// The collapsed sections are saved in the user's Firestore record (field "collapsed"),
+// so they follow the person across devices.
+let collapsedLoaded = false;
+
+function currentCollapsedNames() {
+  return sections.filter(s => s.collapsed).map(s => s.name);
+}
+
+async function saveCollapsedNames(names = currentCollapsedNames()) {
+  if (!currentUser) return;
   try {
-    return new Set(JSON.parse(localStorage.getItem(COLLAPSED_KEY)) || []);
-  } catch {
-    return new Set();
+    await setDoc(doc(db, "selections", currentUser.uid), {
+      name: currentUser.displayName || "",
+      email: currentUser.email || "",
+      collapsed: names
+    }, { merge: true });
+  } catch (err) {
+    console.error("Could not save table layout:", err);
   }
 }
 
-function saveCollapsedNames() {
-  const names = sections.filter(s => s.collapsed).map(s => s.name);
+// Only used once, to carry over the layout a returning user saved in this browser
+// before the setting moved to Firestore.
+function loadLegacyCollapsedNames() {
   try {
-    localStorage.setItem(COLLAPSED_KEY, JSON.stringify(names));
+    return JSON.parse(localStorage.getItem(COLLAPSED_KEY)) || null;
   } catch {
-    // Storage unavailable (e.g. private browsing); the choice just won't persist.
+    return null;
+  }
+}
+
+function applyCollapsedNames(names) {
+  const collapsed = new Set(names);
+  for (const section of sections) setSection(section, collapsed.has(section.name));
+}
+
+// Runs once per login, on the first snapshot of the user's record.
+//  - First login (no record yet): every section starts collapsed, and that is saved.
+//  - Returning user with a saved layout: that layout is restored.
+//  - Returning user from before this change: their layout from this browser is carried
+//    over (or expanded, if none was saved), and saved to Firestore.
+function applyInitialCollapse(snap, data) {
+  if (!snap.exists()) {
+    applyCollapsedNames(sections.map(s => s.name));
+    saveCollapsedNames(sections.map(s => s.name));
+    return;
+  }
+  if (Array.isArray(data.collapsed)) {
+    applyCollapsedNames(data.collapsed);
+    return;
+  }
+  const legacy = loadLegacyCollapsedNames() || [];
+  applyCollapsedNames(legacy);
+  saveCollapsedNames(legacy);
+  try {
+    localStorage.removeItem(COLLAPSED_KEY);
+  } catch {
+    // Nothing to clean up if storage is unavailable.
   }
 }
 
@@ -147,6 +191,7 @@ function buildCurriculum() {
       tbody.appendChild(labels);
 
       const section = { name: entry.header, toggle, sign, rows: [labels], collapsed: false };
+      setSection(section, false);
       toggle.addEventListener("click", () => {
         setSection(section, !section.collapsed);
         saveCollapsedNames();
@@ -179,8 +224,6 @@ function buildCurriculum() {
     tbody.appendChild(tr);
   }
 
-  const savedCollapsed = loadCollapsedNames();
-  for (const section of sections) setSection(section, savedCollapsed.has(section.name));
 }
 
 // Exactly one status per row. Clicking the checked box does nothing;
@@ -257,9 +300,16 @@ function renderAdmin(users) {
 
 // ---------- Sync with Firestore ----------
 function startSync(user) {
+  collapsedLoaded = false;
   unsubSelf?.();
   unsubSelf = onSnapshot(doc(db, "selections", user.uid), snap => {
-    const saved = snap.data()?.selections || {};
+    const data = snap.data() || {};
+    const saved = data.selections || {};
+
+    if (!collapsedLoaded) {
+      collapsedLoaded = true;
+      applyInitialCollapse(snap, data);
+    }
 
     // Any item without a saved answer defaults to "Haven't specifically learned yet".
     // Those defaults are saved once, so the data is complete for every user.
@@ -286,6 +336,7 @@ function startSync(user) {
 }
 
 function stopSync() {
+  collapsedLoaded = false;
   unsubSelf?.();
   unsubAdmin?.();
   unsubSelf = unsubAdmin = null;
