@@ -73,8 +73,9 @@ $("toggleAll").addEventListener("click", () => {
   saveCollapsedNames();
 });
 
-// Status labels row. Built once as the sticky header at the top of the table,
-// and again under each section header so every section reads on its own.
+// Status labels row. Built under each section header. It is the sticky row for
+// its section: CSS keeps it pinned while its own table is on screen, and the
+// next section's table pushes it away when the user scrolls down.
 function buildLabelRow() {
   const tr = document.createElement("tr");
   tr.className = "labels";
@@ -92,22 +93,38 @@ function buildLabelRow() {
   return tr;
 }
 
+// Every section's table uses the same fixed column widths so the columns line up.
+function buildColgroup() {
+  const colgroup = document.createElement("colgroup");
+  const first = document.createElement("col");
+  first.style.width = "40%";
+  colgroup.appendChild(first);
+  const rest = (100 - 40) / STATUSES.length;
+  for (let i = 0; i < STATUSES.length; i++) {
+    const col = document.createElement("col");
+    col.style.width = `${rest}%`;
+    colgroup.appendChild(col);
+  }
+  return colgroup;
+}
+
 // ---------- Build the curriculum table ----------
-// One table. The status labels appear as a sticky header at the top, and again
-// under each section header. Each item row has one checkbox per status.
-// Section header rows toggle the rows beneath them.
+// One table per section. Each table holds its section header, its status-label
+// row (sticky), and the item rows. Section header rows toggle the rows beneath them.
 function buildCurriculum() {
-  const table = document.createElement("table");
-  table.className = "curriculum";
-
-  const thead = document.createElement("thead");
-  thead.appendChild(buildLabelRow());
-  table.appendChild(thead);
-
-  const tbody = document.createElement("tbody");
+  const container = $("curriculum");
+  let tbody = null;
   let current = null;
+
   for (const entry of curriculum) {
     if (entry.header) {
+      const table = document.createElement("table");
+      table.className = "curriculum";
+      table.appendChild(buildColgroup());
+      tbody = document.createElement("tbody");
+      table.appendChild(tbody);
+      container.appendChild(table);
+
       const tr = document.createElement("tr");
       tr.className = "section";
       const td = document.createElement("td");
@@ -161,8 +178,6 @@ function buildCurriculum() {
     }
     tbody.appendChild(tr);
   }
-  table.appendChild(tbody);
-  $("curriculum").appendChild(table);
 
   const savedCollapsed = loadCollapsedNames();
   for (const section of sections) setSection(section, savedCollapsed.has(section.name));

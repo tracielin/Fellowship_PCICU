@@ -26,13 +26,10 @@
     .section-controls { margin-left: auto; display: flex; gap: 6px; }
     .section-controls button { background: #fff; color: #1f3a5f; border: 1px solid #1f3a5f; border-radius: 4px; padding: 6px 12px; font: inherit; font-size: 0.9em; cursor: pointer; }
     h3 { margin: 24px 0 8px; color: #1f3a5f; border-bottom: 2px solid #d0d7e2; padding-bottom: 4px; }
-    table.curriculum { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 6px; font-size: 0.95em; }
+    table.curriculum { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 6px; font-size: 0.95em; margin-bottom: 24px; }
     table.curriculum th, table.curriculum td { padding: 10px 8px; border-bottom: 1px solid #e3e8f0; text-align: center; vertical-align: middle; }
     table.curriculum th:first-child, table.curriculum td:first-child { text-align: left; padding-left: 14px; }
-    table.curriculum thead th { position: sticky; top: 0; z-index: 1; background: #d6e2f0; color: #1f3a5f; font-size: 0.75em; font-weight: 600; line-height: 1.3; border-bottom: 0; }
-    table.curriculum thead th:first-child { border-top-left-radius: 6px; }
-    table.curriculum thead th:last-child { border-top-right-radius: 6px; }
-    table.curriculum tr.labels th { background: #d6e2f0; color: #1f3a5f; font-size: 0.75em; font-weight: 600; line-height: 1.3; border-bottom: 1px solid #b8c7dc; }
+    table.curriculum tr.labels th { background: #d6e2f0; color: #1f3a5f; font-size: 0.75em; font-weight: 600; line-height: 1.3; border-bottom: 1px solid #b8c7dc; position: sticky; top: 0; z-index: 1; }
     table.curriculum tbody th { font-weight: normal; }
     table.curriculum .col-sep { border-left: 2px solid #5d7499; }
     table.curriculum tr.section td { background: #1f3a5f; color: #fff; font-weight: 700; font-size: 1.15em; text-align: left; padding: 12px 14px; }
