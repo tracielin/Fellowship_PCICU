@@ -54,39 +54,61 @@ function saveCollapsedNames() {
 function setSection(section, collapsed) {
   section.collapsed = collapsed;
   section.toggle.setAttribute("aria-expanded", String(!collapsed));
-  section.chevron.textContent = collapsed ? "▸" : "▾";
+  section.sign.textContent = collapsed ? "+" : "\u2212";
   for (const tr of section.rows) tr.hidden = collapsed;
+  updateToggleAll();
 }
 
-// ---------- Build the curriculum table ----------
-// One table: the status labels are the column headers (sticky while scrolling),
-// and each item row has one checkbox per status. Section header rows toggle
-// the item rows beneath them.
-function buildCurriculum() {
-  const table = document.createElement("table");
-  table.className = "curriculum";
+// One button. It reads "Collapse all" while any section is open, and
+// "Expand all" once every section is collapsed.
+function updateToggleAll() {
+  const btn = $("toggleAll");
+  if (!btn) return;
+  btn.textContent = sections.some(s => !s.collapsed) ? "Collapse all" : "Expand all";
+}
 
-  const thead = document.createElement("thead");
-  const headRow = document.createElement("tr");
+$("toggleAll").addEventListener("click", () => {
+  const anyOpen = sections.some(s => !s.collapsed);
+  sections.forEach(s => setSection(s, anyOpen));
+  saveCollapsedNames();
+});
+
+// Status labels row. Built once as the sticky header at the top of the table,
+// and again under each section header so every section reads on its own.
+function buildLabelRow() {
+  const tr = document.createElement("tr");
+  tr.className = "labels";
   const topic = document.createElement("th");
   topic.scope = "col";
   topic.textContent = "Topic";
-  headRow.appendChild(topic);
+  tr.appendChild(topic);
   for (const s of STATUSES) {
     const th = document.createElement("th");
     th.scope = "col";
     th.textContent = s.label;
     if (s.key === "competent") th.classList.add("col-sep");
-    headRow.appendChild(th);
+    tr.appendChild(th);
   }
-  thead.appendChild(headRow);
+  return tr;
+}
+
+// ---------- Build the curriculum table ----------
+// One table. The status labels appear as a sticky header at the top, and again
+// under each section header. Each item row has one checkbox per status.
+// Section header rows toggle the rows beneath them.
+function buildCurriculum() {
+  const table = document.createElement("table");
+  table.className = "curriculum";
+
+  const thead = document.createElement("thead");
+  thead.appendChild(buildLabelRow());
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
   let current = null;
   for (const entry of curriculum) {
-    const tr = document.createElement("tr");
     if (entry.header) {
+      const tr = document.createElement("tr");
       tr.className = "section";
       const td = document.createElement("td");
       td.colSpan = STATUSES.length + 1;
@@ -94,15 +116,20 @@ function buildCurriculum() {
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "section-toggle";
-      const chevron = document.createElement("span");
-      chevron.className = "chevron";
-      chevron.setAttribute("aria-hidden", "true");
-      toggle.append(chevron, document.createTextNode(entry.header));
+      const label = document.createElement("span");
+      label.textContent = entry.header;
+      const sign = document.createElement("span");
+      sign.className = "sign";
+      sign.setAttribute("aria-hidden", "true");
+      toggle.append(label, sign);
       td.appendChild(toggle);
       tr.appendChild(td);
       tbody.appendChild(tr);
 
-      const section = { name: entry.header, toggle, chevron, rows: [], collapsed: false };
+      const labels = buildLabelRow();
+      tbody.appendChild(labels);
+
+      const section = { name: entry.header, toggle, sign, rows: [labels], collapsed: false };
       toggle.addEventListener("click", () => {
         setSection(section, !section.collapsed);
         saveCollapsedNames();
@@ -112,6 +139,7 @@ function buildCurriculum() {
       continue;
     }
 
+    const tr = document.createElement("tr");
     if (current) current.rows.push(tr);
 
     const title = document.createElement("th");
@@ -139,16 +167,6 @@ function buildCurriculum() {
   const savedCollapsed = loadCollapsedNames();
   for (const section of sections) setSection(section, savedCollapsed.has(section.name));
 }
-
-$("expandAll").addEventListener("click", () => {
-  sections.forEach(s => setSection(s, false));
-  saveCollapsedNames();
-});
-
-$("collapseAll").addEventListener("click", () => {
-  sections.forEach(s => setSection(s, true));
-  saveCollapsedNames();
-});
 
 // Exactly one status per row. Clicking the checked box does nothing;
 // clicking another box moves the selection to it.
